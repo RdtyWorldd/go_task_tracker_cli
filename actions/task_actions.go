@@ -4,10 +4,6 @@ import (
 	"github.com/RdtyWorldd/go_task_tracker_cli/dao"
 )
 
-type action interface {
-	Do() (int, error)
-}
-
 type TaskAction struct {
 	args []string
 	dao  dao.Crud_dao
