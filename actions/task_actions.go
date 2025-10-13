@@ -1,6 +1,9 @@
 package actions
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/RdtyWorldd/go_task_tracker_cli/dao"
@@ -17,9 +20,6 @@ func NewTaskAction(_args []string, _dao dao.Crud_dao) TaskAction {
 }
 
 func (act TaskAction) add(desc string) error {
-	// if len(act.args) < 3 {
-	// 	return errors.New("there are too few arguments")
-	// }
 	tasks := act.dao.ReadAll()
 	id := len(tasks) + 1
 	status := task.TODO
@@ -51,6 +51,64 @@ func (act TaskAction) delete(id int) error {
 	return err
 }
 
-func (act TaskAction) Do() (int, error) {
-	return 0, nil
+func (act TaskAction) list(progress interface{}) {
+	task_list := act.dao.ReadAll()
+	if len(task_list) == 0 {
+		fmt.Println("There are no tasks in your list.")
+		return
+	}
+	var res_list []task.Task
+	if value, ok := progress.(task.Progress); ok {
+		fmt.Println("IS A TASK.PROGRESS")
+		for _, t := range task_list {
+			if t.Status == value {
+				res_list = append(res_list, t)
+			}
+		}
+	} else {
+		res_list = task_list
+	}
+	for _, t := range res_list {
+		t.Print()
+	}
+}
+func (act TaskAction) Do() error {
+	var e error
+	switch act.args[1] {
+	case ADD:
+		e = act.add(string(act.args[2]))
+	case UPD:
+		{
+			if len(act.args) < 4 {
+				return errors.New("there are too few arguments")
+			}
+			id, err := strconv.Atoi(act.args[2])
+			if err != nil {
+				return err
+			}
+			upd_desc := string(act.args[3])
+			e = act.update(id, upd_desc)
+		}
+	case DEL:
+		{
+			id, err := strconv.Atoi(act.args[2])
+			if err != nil {
+				return err
+			}
+			e = act.delete(id)
+		}
+	case IN_PROGRESS:
+	case DONE:
+	case LIST:
+		{
+			if len(act.args) == 3 {
+				act.list(task.Progress(act.args[2]))
+			} else {
+				act.list(nil)
+			}
+		}
+	default:
+		fmt.Println("Unkniwn command. Try -h flag to wath all available command")
+	}
+	return e
 }
