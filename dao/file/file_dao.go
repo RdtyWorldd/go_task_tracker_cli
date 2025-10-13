@@ -33,7 +33,7 @@ func NewFileDao(path string) FileDao {
 			panic(err)
 		}
 		for i, value := range tasks {
-			dao.taskMap[i] = value
+			dao.taskMap[tasks[i].ID] = value
 		}
 	}
 	return dao
@@ -54,9 +54,11 @@ func (dao FileDao) Create(task task.Task) {
 		panic(err)
 	}
 	write_data := string(task_json) + "]"
+
 	if len(dao.taskMap) != 0 {
 		write_data = "," + write_data
 	} else {
+		file.Seek(0, 0)
 		write_data = "[" + write_data
 	}
 	_, err = io.WriteString(file, write_data)
@@ -95,11 +97,11 @@ func (dao FileDao) Update(id int, upd_task task.Task) error {
 	}
 	defer file.Close()
 
-	data, err := json.Marshal(dao.taskMap)
+	data, err := dao.marshal()
 	if err != nil {
 		return err
 	}
-	_, err = io.WriteString(file, string(data))
+	_, err = io.Writer.Write(file, data)
 	if err != nil {
 		return err
 	}
@@ -117,13 +119,22 @@ func (dao FileDao) Delete(id int) error {
 	}
 	defer file.Close()
 
-	data, err := json.Marshal(dao.taskMap)
+	data, err := dao.marshal()
 	if err != nil {
 		return err
 	}
-	_, err = io.WriteString(file, string(data))
+	_, err = io.Writer.Write(file, data)
 	if err != nil {
 		return err
 	}
+	file.Truncate(int64(len(data)))
 	return nil
+}
+
+func (dao FileDao) marshal() ([]byte, error) {
+	task_list := make([]task.Task, 0, len(dao.taskMap))
+	for _, value := range dao.taskMap {
+		task_list = append(task_list, value)
+	}
+	return json.Marshal(task_list)
 }

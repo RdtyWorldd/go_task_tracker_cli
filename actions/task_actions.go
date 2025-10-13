@@ -26,7 +26,12 @@ func (act TaskAction) add(desc string) error {
 	created := time.Now()
 	updated := created
 
-	act.dao.Create(task.Task{id, desc, status, created, updated})
+	act.dao.Create(task.Task{
+		ID:          id,
+		Description: desc,
+		Status:      status,
+		CreatedAt:   created,
+		UpdatedAt:   updated})
 	return nil
 }
 
