@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"sort"
 
 	"github.com/RdtyWorldd/go_task_tracker_cli/task"
 )
@@ -83,6 +84,8 @@ func (dao FileDao) ReadAll() []task.Task {
 	for _, value := range dao.taskMap {
 		res = append(res, value)
 	}
+
+	sort.Slice(res, func(i int, j int) bool { return res[i].ID < res[j].ID })
 	return res
 }
 
@@ -105,6 +108,7 @@ func (dao FileDao) Update(id int, upd_task task.Task) error {
 	if err != nil {
 		return err
 	}
+	file.Truncate(int64(len(data)))
 	return nil
 }
 

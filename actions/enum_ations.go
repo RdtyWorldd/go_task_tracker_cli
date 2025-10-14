@@ -11,5 +11,5 @@ const (
 )
 
 type Action interface {
-	Do() (int, error)
+	Do() error
 }
