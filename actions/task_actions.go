@@ -59,7 +59,6 @@ func (act TaskAction) list(progress interface{}) {
 	}
 	var res_list []task.Task
 	if value, ok := progress.(task.Progress); ok {
-		fmt.Println("IS A TASK.PROGRESS")
 		for _, t := range task_list {
 			if t.Status == value {
 				res_list = append(res_list, t)
@@ -72,10 +71,20 @@ func (act TaskAction) list(progress interface{}) {
 		t.Print()
 	}
 }
+
+func (act TaskAction) mark(id int, progress task.Progress) {
+	mark_task, _ := act.dao.Read(id)
+	mark_task.Status = progress
+	act.dao.Update(id, mark_task)
+}
+
 func (act TaskAction) Do() error {
 	var e error
 	switch act.args[1] {
 	case ADD:
+		if len(act.args) < 3 {
+			return errors.New("there are too few arguments")
+		}
 		e = act.add(string(act.args[2]))
 	case UPD:
 		{
@@ -98,7 +107,27 @@ func (act TaskAction) Do() error {
 			e = act.delete(id)
 		}
 	case IN_PROGRESS:
+		{
+			if len(act.args) < 3 {
+				return errors.New("there are too few arguments")
+			}
+			id, err := strconv.Atoi(act.args[2])
+			if err != nil {
+				return err
+			}
+			act.mark(id, task.INPROGRESS)
+		}
 	case DONE:
+		{
+			if len(act.args) < 3 {
+				return errors.New("there are too few arguments")
+			}
+			id, err := strconv.Atoi(act.args[2])
+			if err != nil {
+				return err
+			}
+			act.mark(id, task.DONE)
+		}
 	case LIST:
 		{
 			if len(act.args) == 3 {
