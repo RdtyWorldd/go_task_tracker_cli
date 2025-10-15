@@ -5,7 +5,7 @@ import (
 )
 
 type Crud_dao interface {
-	Create(task.Task)
+	Create(task.Task) error
 	Read(id int) (task.Task, error)
 	Update(id int, upd_task task.Task) error
 	Delete(id int) error

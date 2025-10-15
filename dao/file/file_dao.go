@@ -42,17 +42,17 @@ func NewFileDao(path string) FileDao {
 
 // question
 // нужно ли проверять индекс или доверяться обработчикам комманд
-func (dao FileDao) Create(task task.Task) {
+func (dao FileDao) Create(task task.Task) error {
 	file, err := os.OpenFile(dao.path, os.O_WRONLY, 0666)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
 	file.Seek(-1, 2)
 	task_json, err := json.Marshal(task)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	write_data := string(task_json) + "]"
 
@@ -64,8 +64,9 @@ func (dao FileDao) Create(task task.Task) {
 	}
 	_, err = io.WriteString(file, write_data)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func (dao FileDao) Read(id int) (task.Task, error) {
