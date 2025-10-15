@@ -18,5 +18,8 @@ func main() {
 		return
 	}
 	action = actions.NewTaskAction(args, file.NewFileDao("json/tasks.json"))
-	action.Do()
+	err := action.Do()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }

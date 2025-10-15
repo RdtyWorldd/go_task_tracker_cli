@@ -26,32 +26,44 @@ func (act TaskAction) add(desc string) error {
 	created := time.Now()
 	updated := created
 
-	act.dao.Create(task.Task{
+	err := act.dao.Create(task.Task{
 		ID:          id,
 		Description: desc,
 		Status:      status,
 		CreatedAt:   created,
 		UpdatedAt:   updated})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Task added sucessfully (ID: %d)\n", id)
 	return nil
 }
 
 func (act TaskAction) update(id int, upd_desc string) error {
 	task, err := act.dao.Read(id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	task.Description = upd_desc
 	task.UpdatedAt = time.Now()
-	act.dao.Update(id, task)
+	err = act.dao.Update(id, task)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Task updateded sucessfully (ID: %d)\n", id)
 	return nil
 }
 
 func (act TaskAction) delete(id int) error {
 	err := act.dao.Delete(id)
-	return err
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Task delete sucessfully (ID: %d)\n", id)
+	return nil
 }
 
-func (act TaskAction) list(progress interface{}) {
+func (act TaskAction) list(progress any) {
 	task_list := act.dao.ReadAll()
 	if len(task_list) == 0 {
 		fmt.Println("There are no tasks in your list.")
@@ -72,20 +84,27 @@ func (act TaskAction) list(progress interface{}) {
 	}
 }
 
-func (act TaskAction) mark(id int, progress task.Progress) {
+func (act TaskAction) mark(id int, progress task.Progress) error {
 	mark_task, _ := act.dao.Read(id)
 	mark_task.Status = progress
-	act.dao.Update(id, mark_task)
+	err := act.dao.Update(id, mark_task)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Task progress udated (ID: %d)\n", mark_task.ID)
+	return nil
 }
 
 func (act TaskAction) Do() error {
 	var e error
 	switch act.args[1] {
 	case ADD:
-		if len(act.args) < 3 {
-			return errors.New("there are too few arguments")
+		{
+			if len(act.args) < 3 {
+				return errors.New("there are too few arguments")
+			}
+			e = act.add(string(act.args[2]))
 		}
-		e = act.add(string(act.args[2]))
 	case UPD:
 		{
 			if len(act.args) < 4 {
@@ -131,7 +150,12 @@ func (act TaskAction) Do() error {
 	case LIST:
 		{
 			if len(act.args) == 3 {
-				act.list(task.Progress(act.args[2]))
+				if act.args[2] == string(task.DONE) || act.args[2] == string(task.INPROGRESS) || act.args[2] == string(task.TODO) {
+					act.list(task.Progress(act.args[2]))
+				} else {
+					fmt.Printf("Unknown parameter: %s, use this key words: (%s, %s, %s)\n",
+						act.args[2], task.DONE, task.INPROGRESS, task.TODO)
+				}
 			} else {
 				act.list(nil)
 			}
