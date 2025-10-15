@@ -3,6 +3,7 @@ package file
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sort"
@@ -15,7 +16,7 @@ type FileDao struct {
 	taskMap map[int]task.Task
 }
 
-func NewFileDao(path string) FileDao {
+func NewFileDao(path string) *FileDao {
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
@@ -37,12 +38,12 @@ func NewFileDao(path string) FileDao {
 			dao.taskMap[tasks[i].ID] = value
 		}
 	}
-	return dao
+	return &dao
 }
 
 // question
 // нужно ли проверять индекс или доверяться обработчикам комманд
-func (dao FileDao) Create(task task.Task) error {
+func (dao *FileDao) Create(task task.Task) error {
 	file, err := os.OpenFile(dao.path, os.O_WRONLY, 0666)
 	if err != nil {
 		return err
@@ -69,7 +70,7 @@ func (dao FileDao) Create(task task.Task) error {
 	return nil
 }
 
-func (dao FileDao) Read(id int) (task.Task, error) {
+func (dao *FileDao) Read(id int) (task.Task, error) {
 	if id < 0 || id > len(dao.taskMap) {
 		return task.Task{}, errors.New("index out of range") //пусть пока повисит пустая таска
 	}
@@ -80,7 +81,7 @@ func (dao FileDao) Read(id int) (task.Task, error) {
 	}
 }
 
-func (dao FileDao) ReadAll() []task.Task {
+func (dao *FileDao) ReadAll() []task.Task {
 	res := make([]task.Task, 0, len(dao.taskMap))
 	for _, value := range dao.taskMap {
 		res = append(res, value)
@@ -90,7 +91,7 @@ func (dao FileDao) ReadAll() []task.Task {
 	return res
 }
 
-func (dao FileDao) Update(id int, upd_task task.Task) error {
+func (dao *FileDao) Update(id int, upd_task task.Task) error {
 	if id < 0 || id > len(dao.taskMap) {
 		return errors.New("index out of range") //пусть пока повисит пустая таска
 	}
@@ -113,11 +114,11 @@ func (dao FileDao) Update(id int, upd_task task.Task) error {
 	return nil
 }
 
-func (dao FileDao) Delete(id int) error {
+func (dao *FileDao) Delete(id int) error {
 	if id < 0 || id > len(dao.taskMap) {
 		return errors.New("index out of range") //пусть пока повисит пустая таска
 	}
-	delete(dao.taskMap, id)
+	dao.delete_task(id)
 	file, err := os.OpenFile(dao.path, os.O_WRONLY, 0666)
 	if err != nil {
 		return err
@@ -142,4 +143,21 @@ func (dao FileDao) marshal() ([]byte, error) {
 		task_list = append(task_list, value)
 	}
 	return json.Marshal(task_list)
+}
+
+func (dao *FileDao) delete_task(id int) {
+	delete(dao.taskMap, id)
+	task_list := make([]task.Task, 0, len(dao.taskMap))
+	for _, value := range dao.taskMap {
+		if value.ID != 1 {
+			value.ID -= 1
+		}
+		task_list = append(task_list, value)
+	}
+
+	dao.taskMap = make(map[int]task.Task)
+	for _, value := range task_list {
+		fmt.Println(value)
+		dao.taskMap[value.ID] = value
+	}
 }
