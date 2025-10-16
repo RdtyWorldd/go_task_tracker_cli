@@ -15,6 +15,11 @@ func main() {
 	}
 	var action actions.Action
 	if args[1] == actions.HELP {
+		action = actions.NewHelpAction(args[0])
+		err := action.Do()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 		return
 	}
 	action = actions.NewTaskAction(args, file.NewFileDao("json/tasks.json"))
