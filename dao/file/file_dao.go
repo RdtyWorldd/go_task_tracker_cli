@@ -3,7 +3,6 @@ package file
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"sort"
@@ -157,7 +156,6 @@ func (dao *FileDao) delete_task(id int) {
 
 	dao.taskMap = make(map[int]task.Task)
 	for _, value := range task_list {
-		fmt.Println(value)
 		dao.taskMap[value.ID] = value
 	}
 }
